@@ -1,4 +1,5 @@
 # social-search
+
 TODO:
 * Scala REST back-end layer + one-click heroku deployment script
 * Hybrid HTML5+JS Mobile app + build scripts
@@ -9,4 +10,26 @@ TODO:
 * Very simple server-to-client notifications (no need for websockets/long-polling at this stage)
 
 
+##Follow these steps to get started:
 
+1. Git-clone this repository.
+2. Change directory into your clone.
+3. Launch SBT: $ sbt
+
+```sh
+$ git clone https://github.com/piecyk/social-search.git
+$ cd social-search
+$ sbt
+```
+
+sbt commnads: test, re-start, re-stop.
+
+Type in sbt re-start your app should now be running on [localhost:8080](http://localhost:8080/).
+
+## Deploying to Heroku
+
+```sh
+$ heroku create
+$ git push heroku master
+$ heroku open
+```
