@@ -33,3 +33,6 @@ $ heroku create
 $ git push heroku master
 $ heroku open
 ```
+
+
+## Hybrid Mobile app info page - [here](https://github.com/piecyk/social-search/blob/master/client/README.md)
