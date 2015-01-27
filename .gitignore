@@ -47,3 +47,4 @@ src_managed/
 
 # Scala-IDE specific
 .scala_dependencies
+/bin

@@ -5,9 +5,8 @@ var Input = mui.Input;
 var BackendClient = require('../remote/BackendClient');
 
 var Main = React.createClass({
-  getInitialState: function() {
-    return {
-    };
+  getInitialState: function () {
+    return {};
   },
   render: function () {
 
@@ -17,33 +16,26 @@ var Main = React.createClass({
         <Input ref="login" type="text" name="login" placeholder="Login" />
         <Input ref="password" type="password" name="password" placeholder="Password" />
         <RaisedButton label="Login" primary={true} onTouchTap={this.login} />
-        {this.state /*FIXME why this.state is undefined during the 1st render*/ &&this.state.authFailed ? <p className="warning">Authentication failed.</p> : null}
+        {this.state /*FIXME why this.state is undefined during the 1st render*/ && this.state.authFailed ? <p className="warning">Authentication failed.</p> : null}
       </div>
     );
   },
 
   login: function () {
-    var login = this.refs.login.getValue();
-    var pass = this.refs.password.getValue();
-    if (login == "hello" && pass == "xxx") {
-      // TODO
-      alert("OK. TODO");
-    } else {
-
-      // FIXME temporary remove later
-      var httpResponse = BackendClient.test(function(resp){
-        console.log("resp", resp);
-        //alert(resp);
-      });
+    var login = this.refs.login.getValue() || "";
+    var pass = this.refs.password.getValue() || "";
+    var self = this;
+    BackendClient.authenticate(login, pass, function (resp) {
+      self.setState({"authFailed": false});
+      alert("WELCOME");
+    });
 
 
-      //
-
-      this.setState({"authFailed": true});
-    }
+    //TODO temporary
+    this.setState({"authFailed": true});
 
   }
-  
+
 });
 
 module.exports = Main;

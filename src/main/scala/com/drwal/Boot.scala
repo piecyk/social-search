@@ -8,6 +8,7 @@ import spray.can.Http
 import util.Properties
 
 object Boot extends App {
+	println(123);
   // we need an ActorSystem to host our application in
   implicit val system = ActorSystem("on-drwal-can")
 
