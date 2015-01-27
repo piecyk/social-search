@@ -18,12 +18,12 @@ class MyServiceActor extends Actor with MyService {
   // this actor only runs our route, but you could add
   // other things here, like request stream processing
   // or timeout handling
-  def receive = runRoute(myRoute ~ drwalApi)
+  def receive = runRoute(myRoute ~ drwalApp ~ drwalApi)
 }
 
 
 // this trait defines our service behavior independently from the service actor
-trait MyService extends HttpService {
+trait MyService extends HttpService with CorsTrait {
 
   val myRoute =
     path("") {
@@ -32,7 +32,7 @@ trait MyService extends HttpService {
           complete {
             <html>
               <body>
-              <h1>This is the SocialSearch based back-end server</h1>
+              <h1>This is the SocialSearch based back-end server.</h1>
               </body>
             </html>
           }
@@ -40,11 +40,25 @@ trait MyService extends HttpService {
       }
     }
 
-  // TODO: https://gagnechris.wordpress.com/2013/09/15/building-restful-apis-with-scala-using-spray/
-  val drwalApiVersion = "/v1"
+  // TODO: just for fun, remove in prod
+  val drwalApp = {
+    path("app") {
+      compressResponse() {
+        getFromResource("app/index.html")
+      }
+    } ~
+    pathPrefix("app") {
+      compressResponse() {
+        getFromResourceDirectory("app/")
+      }
+    }
+  }
 
-  var drwalApi =
-    pathPrefix("api") {
+  // TODO: https://gagnechris.wordpress.com/2013/09/15/building-restful-apis-with-scala-using-spray/
+  val drwalApiVersion = "v1"
+
+  var drwalApi = cors {
+    pathPrefix("api" / drwalApiVersion) {
       path("test") {
         val source = """{ "some": "JSON source" }"""
         val jsonAst = source.parseJson
@@ -54,4 +68,6 @@ trait MyService extends HttpService {
         }
       }
     }
+  }
+
 }
