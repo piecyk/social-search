@@ -2,6 +2,7 @@ var React = require('react');
 var mui = require('material-ui');
 var RaisedButton = mui.RaisedButton;
 var Input = mui.Input;
+var BackendClient = require('../remote/BackendClient');
 
 var Main = React.createClass({
   getInitialState: function() {
@@ -28,6 +29,15 @@ var Main = React.createClass({
       // TODO
       alert("OK. TODO");
     } else {
+
+      // FIXME temporary remove later
+      var httpResponse = BackendClient.test(function(resp){
+        alert(resp);
+      });
+
+
+      //
+
       this.setState({"authFailed": true});
     }
 
