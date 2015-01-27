@@ -32,7 +32,8 @@ var Main = React.createClass({
 
       // FIXME temporary remove later
       var httpResponse = BackendClient.test(function(resp){
-        alert(resp);
+        console.log("resp", resp);
+        //alert(resp);
       });
 
 
