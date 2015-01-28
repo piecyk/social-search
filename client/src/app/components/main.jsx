@@ -12,7 +12,7 @@ var Main = React.createClass({
 
     return (
       <div className="centralized">
-        <h3>Wellcome to Dendryt</h3>
+        <h3>Welcome to Social Search</h3>
         <Input ref="login" type="text" name="login" placeholder="Login" />
         <Input ref="password" type="password" name="password" placeholder="Password" />
         <RaisedButton label="Login" primary={true} onTouchTap={this.login} />
