@@ -1,5 +1,4 @@
 # social-search
-=======
 
 [![Build Status](https://travis-ci.org/piecyk/social-search.svg?branch=master)](https://travis-ci.org/piecyk/social-search)
 [![Coverage Status](https://coveralls.io/repos/piecyk/social-search/badge.svg)](https://coveralls.io/r/piecyk/social-search)
