@@ -8,21 +8,14 @@ import DefaultJsonProtocol._
 import MediaTypes._
 import spray.httpx.SprayJsonSupport
 
-// we don't implement our route structure directly in the service actor because
-// we want to be able to test it independently, without having to spin up an actor
 class MyServiceActor extends Actor with MyService {
 
-  // the HttpService trait defines only one abstract member, which
-  // connects the services environment to the enclosing actor or test
   def actorRefFactory = context
 
-  // this actor only runs our route, but you could add
-  // other things here, like request stream processing
-  // or timeout handling
   def receive = runRoute(myRoute ~ drwalApp ~ drwalApi)
 }
 
-// this trait defines our service behavior independently from the service actor
+// TODO: move this
 trait MyService extends HttpService with CorsTrait {
 
   val myRoute =
@@ -30,11 +23,7 @@ trait MyService extends HttpService with CorsTrait {
       get {
         respondWithMediaType(`text/html`) { // XML is marshalled to `text/xml` by default, so we simply override here
           complete {
-            <html>
-              <body>
-                <h1>This is the SocialSearch based back-end server.</h1>
-              </body>
-            </html>
+            <html><body><h1>This is the SocialSearch based back-end server.</h1></body></html>
           }
         }
       }
@@ -75,22 +64,22 @@ trait MyService extends HttpService with CorsTrait {
           requestContext => requestContext.complete(jsonAst.prettyPrint)
         }
       } ~
-        path("authenticate") {
-          post {
-            entity(as[AuthRequest]) { authRequest =>
-              println(authRequest);
+      path("authenticate") {
+        post {
+          entity(as[AuthRequest]) { authRequest =>
+            println(authRequest);
 
-              respondWithMediaType(`application/json`) {
-                requestContext =>
-                  if (isValidUser(authRequest)) {
-                    requestContext.complete("""{"status":"ok"}""")
-                  } else {
-                    requestContext.complete(415, "Incorrect credentials")
-                  }
+            respondWithMediaType(`application/json`) {
+              requestContext =>
+              if (isValidUser(authRequest)) {
+                requestContext.complete("""{"status":"ok"}""")
+              } else {
+                requestContext.complete(415, "Incorrect credentials")
               }
             }
           }
         }
+      }
     }
   }
 
