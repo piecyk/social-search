@@ -1,0 +1,15 @@
+language: scala
+scala:
+- 2.11.2
+script:
+- sbt "+ clean coverage test"
+jdk:
+- oraclejdk7
+- openjdk7
+deploy:
+  provider: heroku
+  api_key:
+    secure: KcRL6t74j0m7DhFRoZ6PK7I6OGQ/V4qNvmuZW3AyoDnwwObKP/FX/1iKzJU/vxydkK88yPj0foEQfd5TrZDJ/cUkYbyhitxEaJ4JzFWt2afHhwIX/xFEsPi2EiOGj2UhjjToXfcTkVw0M/oDIsItFUYz2ZGn92y693X6QQMBtvA=
+  app: arcane-harbor-5434
+  on:
+    repo: piecyk/social-search
