@@ -4,6 +4,10 @@
 [![Build Status](https://travis-ci.org/piecyk/social-search.svg?branch=master)](https://travis-ci.org/piecyk/social-search)
 [![Coverage Status](https://coveralls.io/repos/piecyk/social-search/badge.svg)](https://coveralls.io/r/piecyk/social-search)
 
+
+See also the [Social Search Hybrid mobile app](https://github.com/michalradziwon/social-search-hybrid-client) repository.
+
+
 TODO:
 * Scala REST back-end layer + one-click heroku deployment script
 * Hybrid HTML5+JS Mobile app + build scripts
