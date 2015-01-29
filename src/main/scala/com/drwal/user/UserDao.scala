@@ -32,7 +32,7 @@ class UserReactiveDao(db: DB, userCollection: BSONCollection, system: ActorSyste
   def getById(id: BSONObjectID): Future[Option[User]] = {
     import com.drwal.user.BsonJsonProtocol._
 
-    userCollection.find(BSONDocument("id" -> id)).one[User]
+    userCollection.find(BSONDocument("_id" -> id)).one[User]
   }
 
   def create(login: String, password: String, email: String) = {
