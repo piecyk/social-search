@@ -1,56 +1,62 @@
 package com.drwal.user
 
 import akka.actor.Actor
+import com.drwal.utils.CORSDirective
+import shapeless.HList
+import spray.http.StatusCodes._
 import spray.routing._
-import spray.http._
-import spray.json._
-import spray.httpx.SprayJsonSupport._
-import reactivemongo.bson._
-import DefaultJsonProtocol._
-import MediaTypes._
-import scala.util._
-import com.drwal.CorsTrait
+
+import scala.util.{Failure, Success}
 
 trait UserActor extends Actor with UserEndpoint {
-  val userDao : UserDao
+  val userDao: UserDao
+
   def actorRefFactory = context
+
   def receive = runRoute(drwalUserApi)
 }
 
-trait UserEndpoint extends HttpService with CorsTrait {
+trait UserEndpoint extends HttpService with CORSDirective {
+
+  val userDao: UserDao
 
   implicit def executionContext = actorRefFactory.dispatcher
 
-  val userDao : UserDao
+  def getPath[L <: HList](pm: PathMatcher[L]) = get & path(pm)
 
-  object UserJsonProtocol extends DefaultJsonProtocol {
+  def postPath[L <: HList](pm: PathMatcher[L]) = post & path(pm)
 
-    implicit object BSONObjectIdProtocol extends RootJsonFormat[BSONObjectID] {
-      override def write(obj: BSONObjectID): JsValue = JsString(obj.stringify)
-      override def read(json: JsValue): BSONObjectID = json match {
-        case JsString(id) => BSONObjectID.parse(id) match {
-          case Success(validId) => validId
-          case _ => deserializationError("Invalid BSON Object Id")
-        }
-        case _ => deserializationError("BSON Object Id expected")
-      }
+  def drwalUserApi: Route = pathPrefix("api" / "v1") {
+    CORS {
+      userRoute
     }
-
-    implicit val userFormat = jsonFormat4(User.apply)
   }
 
-  var drwalUserApi = cors { respondWithMediaType(`application/json`) { pathPrefix("api" / "v1") {
+  def userRoute: Route =
+    getPath("users") {
+      import com.drwal.user.UserJsonProtocol._
 
-    path("users") {
-      println("test")
-      import UserJsonProtocol._
-
-      onComplete(userDao.getAll()) {
-        case Success(value) => complete(value)
-        case Failure(ex)    => complete(ex.getMessage)
+      onComplete(userDao.getAll) {
+        case Success(users) => {
+          respondWithStatus(OK) {
+            complete(users)
+          }
+        }
+        case Failure(ex) => {
+          val errorMsg = ex.getMessage
+          complete(InternalServerError, s"userRoute Error: $errorMsg")
+        }
       }
-    }
+    } ~
+      postPath("users" / "new") {
+        import com.drwal.user.UserJsonProtocol._
 
-  }}}
-
+        //entity(as[User]) { user =>
+        parameters('login, 'password, 'email) { (login, password, email) =>
+          userDao.create(login, password, email)
+          respondWithStatus(OK) {
+            complete(s"The login is '$login' and the email is '$email'")
+          }
+        }
+      }
 }

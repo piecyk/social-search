@@ -2,45 +2,47 @@ package com.drwal.user
 
 import akka.actor.ActorSystem
 import akka.event.Logging
-
+import reactivemongo.api.DB
+import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.bson.{BSONObjectID, BSONDocument}
-import reactivemongo.api.{QueryOpts, DB}
-import reactivemongo.api.collections.default._
 
 import scala.concurrent.Future
-import reactivemongo.bson.BSONObjectID
 
 trait UserDao {
   def getAll(): Future[List[User]]
+
   def getById(id: BSONObjectID): Future[Option[User]]
+
   def create(login: String, password: String, email: String)
+
+  def remove()
 }
 
 class UserReactiveDao(db: DB, userCollection: BSONCollection, system: ActorSystem) extends UserDao {
-  // TODO: check how to use 'with Logger'
   val log = Logging(system, getClass)
 
   implicit val context = system.dispatcher
-  import UserFormats._
 
-  def getById(id: BSONObjectID): Future[Option[User]] = {
-    log.info("Getting user: %s".format(id))
-    userCollection.find(BSONDocument("_id" -> id)).one[User]
+  def getAll: Future[List[User]] = {
+    import com.drwal.user.BsonJsonProtocol._
+
+    userCollection.find(BSONDocument.empty).cursor[User].collect[List]()
   }
 
-  def getAll = {
-    log.info("Getting all users")
-    //  hmm
-    val query = BSONDocument("$query" -> BSONDocument())
+  def getById(id: BSONObjectID): Future[Option[User]] = {
+    import com.drwal.user.BsonJsonProtocol._
 
-    userCollection.find(query)
-      .cursor[User]
-      .collect[List]()
+    userCollection.find(BSONDocument("id" -> id)).one[User]
   }
 
   def create(login: String, password: String, email: String) = {
-    log.info("Create user")
+    import com.drwal.user.BsonJsonProtocol._
+
     userCollection.insert(new User(Some(BSONObjectID.generate), login, password, email))
+  }
+
+  def remove = {
+    userCollection.remove(BSONDocument.empty)
   }
 
 }

@@ -1,6 +1,7 @@
 package com.drwal
 
 import akka.actor.Actor
+import com.drwal.utils.CORSDirective
 import spray.routing._
 import spray.http._
 import spray.json._
@@ -19,7 +20,7 @@ class MyServiceActor extends Actor with MyService {
 }
 
 // TODO: move this
-trait MyService extends HttpService with CorsTrait {
+trait MyService extends HttpService with CORSDirective {
   //the following line was missing
 
   val myRoute =
@@ -42,7 +43,7 @@ trait MyService extends HttpService with CorsTrait {
   // TODO: move this
   // TODO: https://gagnechris.wordpress.com/2013/09/15/building-restful-apis-with-scala-using-spray/
   val drwalApiVersion = "v1"
-  var drwalApi = cors { respondWithMediaType(`application/json`) { pathPrefix("api" / drwalApiVersion) {
+  var drwalApi = CORS { respondWithMediaType(`application/json`) { pathPrefix("api" / drwalApiVersion) {
 
     path("test") {
       val source = """{ "some": "JSON source" }"""

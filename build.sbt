@@ -30,8 +30,7 @@ libraryDependencies ++= {
     "com.typesafe.akka"            %%  "akka-slf4j"      % akkaV,
     "com.typesafe.akka"            %%  "akka-testkit"    % akkaV   % "test",
     "org.reactivemongo"            %%  "reactivemongo"   % "0.10.5.0.akka23",
-    "org.specs2"                   %%  "specs2-core"     % "2.3.11" % "test",
-    "ch.qos.logback"               %   "logback-classic" % "1.1.2"
+    "org.specs2"                   %%  "specs2-core"     % "2.3.11" % "test"
   )
 }
 

@@ -1,11 +1,11 @@
-package com.drwal
+package com.drwal.utils
 
-import spray.http.{AllOrigins, HttpMethods, HttpMethod, HttpResponse}
 import spray.http.HttpHeaders._
 import spray.http.HttpMethods._
+import spray.http.{AllOrigins, HttpMethods, HttpResponse}
 import spray.routing._
 
-trait CorsTrait {
+trait CORSDirective {
   this: HttpService =>
 
   private val allowOriginHeader = `Access-Control-Allow-Origin`(AllOrigins)
@@ -17,7 +17,7 @@ trait CorsTrait {
     `Access-Control-Max-Age`(60 * 60 * 24 * 20)  // cache pre-flight response for 20 days
   )
 
-  def cors[T]: Directive0 = mapRequestContext {
+  def CORS[T]: Directive0 = mapRequestContext {
     context => context.withRouteResponseHandling {
       case Rejected(reasons)
           if (context.request.method == HttpMethods.OPTIONS && reasons.exists(_.isInstanceOf[MethodRejection])) => {
