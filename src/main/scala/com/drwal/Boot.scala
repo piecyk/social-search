@@ -7,8 +7,9 @@ import com.drwal.user.{UserReactiveDao, UserDao, UserEndpoint}
 import com.drwal.utils.Mongo
 import reactivemongo.api.{MongoConnection, MongoDriver}
 import spray.can.Http
-
+import scala.concurrent._
 import scala.util.{Failure, Success, Try, Properties}
+import reactivemongo.api.DB
 
 trait DrwalActorSystem {
   implicit val system = ActorSystem("on-drwal-can")
@@ -32,32 +33,37 @@ object Boot extends App with DrwalActorSystem {
   val log = Logging(system, getClass)
   log.info("Boot actor on-drwal-can")
 
-  val URI = System.getProperty("MONGOLAB_URI")
-  log.info("MONGOLAB_URI = " + URI)
 
-  val driver = new MongoDriver
-  val connection: Try[MongoConnection] =
-    MongoConnection.parseURI(URI).map { parsedUri =>
-      log.info("MONGOLAB_URI parsedUri = " + parsedUri)
-      driver.connection(parsedUri)
-    }
+  def connnectToDb(): Future[DB] = {
+    val p = Promise[DB]()
+    val driver = new MongoDriver
 
-  connection match {
-    case Success(con) => {
-      log.info("Connection = " + con.toString)
-      import scala.concurrent.ExecutionContext.Implicits.global
+    val url = Properties.envOrElse("MONGOLAB_URI", "localhost" )
+    log.info("MONGOLAB_URI not there = " + url)
 
-      lazy val userDao: UserDao = new UserReactiveDao(con("heroku_app33528479"), system)
-      val service = system.actorOf(Props(classOf[DependencyInjector], userDao), name = "execution")
+    val connection: Try[MongoConnection] =
+      MongoConnection.parseURI(url).map { parsedUri =>
+        log.info("MONGOLAB_URI parsedUri = " + parsedUri)
+        driver.connection(parsedUri)
+      }
 
-      IO(Http) ! Http.Bind(service, "0.0.0.0", Properties.envOrElse("PORT", "8080").toInt)
-      log.info("Start http")
-    }
-    case Failure(e) => throw new IllegalStateException("should not have come here")
+      connection match {
+        case Success(con) => {
+          log.info("Connection = " + con.toString)
+          import scala.concurrent.ExecutionContext.Implicits.global
+
+          p.success(con("heroku_app33528479"))
+        }
+        case Failure(e) => throw new IllegalStateException("should not have come here")
+      }
+    p.future
   }
 
-  // create and start our service actor
+
+  val userDao: UserDao = new UserReactiveDao(connnectToDb(), system)
+  val service = system.actorOf(Props(classOf[DependencyInjector], userDao), name = "execution")
+
+  IO(Http) ! Http.Bind(service, "0.0.0.0", Properties.envOrElse("PORT", "8080").toInt)
   //val service = system.actorOf(Props(classOf[MyServiceActor], userDao), "demo-service")
-  //IO(Http) ! Http.Bind(service, "0.0.0.0", Properties.envOrElse("PORT", "8080").toInt)
   log.info("Backend Service End")
 }

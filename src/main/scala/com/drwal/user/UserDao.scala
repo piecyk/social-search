@@ -4,9 +4,12 @@ import akka.actor.ActorSystem
 import reactivemongo.api.DB
 import reactivemongo.api.collections.default.BSONCollection
 import reactivemongo.bson.{BSONDocument}
-
 import scala.concurrent._
 import scala.util.{Success, Failure}
+import scala.concurrent.Await
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 trait UserDao {
   def getAll(): Future[List[UserResponce]]
@@ -20,13 +23,17 @@ trait UserDao {
   def remove()
 }
 
-class UserReactiveDao(db: DB, system: ActorSystem) extends UserDao {
+class UserReactiveDao(db: Future[DB], system: ActorSystem) extends UserDao {
 
   implicit val context = system.dispatcher
 
   import com.drwal.user.BsonJsonProtocol._
 
-  val userCollection = db("user.collection")
+
+  // TODO: LOL ? :D 
+  implicit val timeout = Timeout(30 seconds)
+  val _db = Await.result(db, timeout.duration).asInstanceOf[DB]
+  val userCollection = _db("user.collection")
 
   def getAll: Future[List[UserResponce]] = userCollection.find(BSONDocument.empty).cursor[UserResponce].collect[List]()
 
