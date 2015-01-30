@@ -2,6 +2,7 @@ package com.drwal.utils
 
 import shapeless.HList
 import spray.routing._
+import spray.http.MediaTypes._
 
 trait RouteHelper extends HttpService with CORSDirective {
 
@@ -11,8 +12,10 @@ trait RouteHelper extends HttpService with CORSDirective {
 
   def getPathApi(routes: Route): Route = {
     pathPrefix("api" / "v1") {
-      CORS {
-        routes
+      respondWithMediaType(`application/json`) {
+        CORS {
+          routes
+        }
       }
     }
   }

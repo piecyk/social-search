@@ -1,19 +1,15 @@
 package com.drwal.user
 
-import reactivemongo.bson.BSONObjectID
 import spray.httpx.SprayJsonSupport
 import spray.json.DefaultJsonProtocol
 
-case class User(_id: Option[BSONObjectID],
-                login: String,
+case class User(username: String,
                 password: String, // like a virgin :d
                 email: String)
 
 object UserJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
 
-  import com.drwal.utils.HelperJsonProtocol._
-
-  implicit val userFormat = jsonFormat4(User)
+  implicit val userFormat = jsonFormat3(User)
 }
 
 object BsonJsonProtocol {
