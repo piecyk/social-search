@@ -30,24 +30,28 @@ trait MasterInjector extends Actor with UserEndpoint {
 object Boot extends App with DrwalActorSystem {
 
   val log = Logging(system, getClass)
+  log.info("Boot actor on-drwal-can")
 
   val URI = System.getProperty("MONGOLAB_URI")
+  log.info("MONGOLAB_URI = " + URI)
+
   val driver = new MongoDriver
   val connection: Try[MongoConnection] =
     MongoConnection.parseURI(URI).map { parsedUri =>
+      log.info("MONGOLAB_URI parsedUri = " + parsedUri)
       driver.connection(parsedUri)
     }
 
   connection match {
     case Success(con) => {
-      log.info("connection" + con.toString)
+      log.info("Connection = " + con.toString)
       import scala.concurrent.ExecutionContext.Implicits.global
 
       lazy val userDao: UserDao = new UserReactiveDao(con("heroku_app33528479"), system)
       val service = system.actorOf(Props(classOf[DependencyInjector], userDao), name = "execution")
 
       IO(Http) ! Http.Bind(service, "0.0.0.0", Properties.envOrElse("PORT", "8080").toInt)
-      log.info("Backend Service Ready")
+      log.info("Start http")
     }
     case Failure(e) => throw new IllegalStateException("should not have come here")
   }
@@ -55,5 +59,5 @@ object Boot extends App with DrwalActorSystem {
   // create and start our service actor
   //val service = system.actorOf(Props(classOf[MyServiceActor], userDao), "demo-service")
   //IO(Http) ! Http.Bind(service, "0.0.0.0", Properties.envOrElse("PORT", "8080").toInt)
-  //log.info("Backend Service Ready")
+  log.info("Backend Service End")
 }
