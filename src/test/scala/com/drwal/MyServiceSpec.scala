@@ -1,11 +1,12 @@
 package com.drwal
 
+import com.drwal.utils.CORSDirective
 import org.specs2.mutable.Specification
 import spray.testkit.Specs2RouteTest
 import spray.http._
 import StatusCodes._
 
-class MyServiceSpec extends Specification with Specs2RouteTest with MyService with CorsTrait {
+class MyServiceSpec extends Specification with Specs2RouteTest with MyService with CORSDirective {
   def actorRefFactory = system
 
   "MyService" should {
@@ -29,7 +30,7 @@ class MyServiceSpec extends Specification with Specs2RouteTest with MyService wi
       }
     }
 
-    val testRoute = path("test") { cors {
+    val testRoute = path("test") { CORS {
       get {
         complete((200, "'CORS drwal"))
       } ~

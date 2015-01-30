@@ -1,25 +1,39 @@
 package com.drwal
 
-
-import akka.actor.{ActorSystem, Props}
-import akka.io.IO
+import akka.actor.{Actor, ActorSystem, IndirectActorProducer, Props}
 import akka.event.Logging
+import akka.io.IO
+import com.drwal.user.{UserDao, UserEndpoint}
+import com.drwal.utils.Mongo
 import spray.can.Http
-import util.Properties
 
-object Boot extends App {
-  
+import scala.util.Properties
+
+trait DrwalActorSystem {
   implicit val system = ActorSystem("on-drwal-can")
+}
 
+class DependencyInjector(_userDao: UserDao) extends IndirectActorProducer {
+  override def actorClass = classOf[Actor]
+  override def produce = new MasterInjector{
+    val userDao = _userDao
+  }
+}
+
+trait MasterInjector extends Actor with UserEndpoint {
+  val userDao: UserDao
+  def actorRefFactory = context
+  def receive = runRoute(drwalUserApi)
+}
+
+object Boot extends App with DrwalActorSystem with Mongo {
   val log = Logging(system, getClass)
 
+  val service = system.actorOf(Props(classOf[DependencyInjector], MongoUserCollection.userDao), name = "execution")
+
   // create and start our service actor
-  val service = system.actorOf(Props[MyServiceActor], "demo-service")
+  //val service = system.actorOf(Props(classOf[MyServiceActor], userDao), "demo-service")
 
-  val port = Properties.envOrElse("PORT", "8080").toInt // for Heroku compatibility
-
-  // start a new HTTP server on port 8080 with our service actor as the handler
-  IO(Http) ! Http.Bind(service, "0.0.0.0", port)
-
+  IO(Http) ! Http.Bind(service, "0.0.0.0", Properties.envOrElse("PORT", "8080").toInt)
   log.info("Backend Service Ready")
 }
