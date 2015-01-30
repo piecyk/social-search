@@ -20,12 +20,13 @@ trait UserDao {
   def remove()
 }
 
-class UserReactiveDao(db: DB, userCollection: BSONCollection, system: ActorSystem) extends UserDao {
+class UserReactiveDao(db: DB, system: ActorSystem) extends UserDao {
 
   implicit val context = system.dispatcher
 
   import com.drwal.user.BsonJsonProtocol._
 
+  val userCollection = db("user.collection")
 
   def getAll: Future[List[UserResponce]] = userCollection.find(BSONDocument.empty).cursor[UserResponce].collect[List]()
 

@@ -1,7 +1,6 @@
 package com.drwal.user
 
 import akka.actor.Actor
-import com.drwal.utils.CORSDirective
 import spray.http.StatusCodes._
 import spray.routing._
 import com.drwal.utils.RouteHelper
@@ -54,10 +53,9 @@ trait UserEndpoint extends HttpService with RouteHelper {
       postPath("users" / "new") {
         import com.drwal.user.UserJsonProtocol._
 
-        //entity(as[User]) { user =>
-        parameters('login, 'password, 'email) { (login, password, email) =>
-          userDao.create(login, password, email)
-          complete(s"The login is '$login' and the email is '$email'")
+        entity(as[User]) { user =>
+          userDao.create(user.username, user.password, user.email)
+          complete(s"The login is '$user.username' and the email is '$user.email'")
         }
       } ~
       path("authenticate") {
