@@ -31,9 +31,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
 
       onComplete(userDao.getAll) {
         case Success(users) => {
-          respondWithStatus(OK) {
-            complete(users)
-          }
+          complete(users)
         }
         case Failure(ex) => {
           val errorMsg = ex.getMessage
@@ -46,9 +44,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
 
         onComplete(userDao.getByUsername(username)) {
           case Success(user) => {
-            respondWithStatus(OK) {
-              complete(user)
-            }
+            complete(user)
           }
           case Failure(ex) => {
             val errorMsg = ex.getMessage
