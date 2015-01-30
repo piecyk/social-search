@@ -27,7 +27,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
 
   def userRoute: Route =
     getPath("users") {
-      import com.drwal.user.UserJsonProtocol._
+      import com.drwal.user.UserResponceJsonProtocol._
 
       onComplete(userDao.getAll) {
         case Success(users) => {
@@ -42,7 +42,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
       }
     } ~
       getPath("users" / "^[A-Za-z0-9_.]+$".r) { (username) =>
-        import com.drwal.user.UserJsonProtocol._
+        import com.drwal.user.UserResponceJsonProtocol._
 
         onComplete(userDao.getByUsername(username)) {
           case Success(user) => {
@@ -62,9 +62,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
         //entity(as[User]) { user =>
         parameters('login, 'password, 'email) { (login, password, email) =>
           userDao.create(login, password, email)
-          respondWithStatus(OK) {
-            complete(s"The login is '$login' and the email is '$email'")
-          }
+          complete(s"The login is '$login' and the email is '$email'")
         }
       } ~
       path("authenticate") {
@@ -73,14 +71,8 @@ trait UserEndpoint extends HttpService with RouteHelper {
         post {
           entity(as[AuthRequest]) { authRequest =>
             // TODO: whatt are yoy doing ? turn of emacs
-            onComplete(userDao.getByUsername(authRequest.username)) {
-              case Success(user) => user match {
-                case Some(user) => {
-                  println("user = " + user)
-                  if (user.password == authRequest.password) complete(200, "Yee") else complete(415, "Incorrect credentials")
-                }
-                case None => complete(415, "Incorrect credentials")
-              }
+            onComplete(userDao.isValidUser(authRequest)) {
+              case Success(valid) => complete(200, "Yee")
               case Failure(ex) => complete(415, "Incorrect credentials")
             }
           }
