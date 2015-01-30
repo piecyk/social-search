@@ -7,7 +7,6 @@ import spray.routing._
 import com.drwal.utils.RouteHelper
 import scala.util.{Failure, Success}
 import reactivemongo.bson.{BSONObjectID}
-import com.drwal.authentication.AuthRequest
 
 trait UserActor extends Actor with UserEndpoint {
   val userDao: UserDao
@@ -62,13 +61,12 @@ trait UserEndpoint extends HttpService with RouteHelper {
         }
       } ~
       path("authenticate") {
-        import com.drwal.authentication.AuthRequestJsonSupport._
+        import com.drwal.user.UserAuthRequestJsonSupport._
 
         post {
-          entity(as[AuthRequest]) { authRequest =>
-            // TODO: whatt are yoy doing ? turn of emacs
-            onComplete(userDao.isValidUser(authRequest)) {
-              case Success(valid) => complete(200, "Yee")
+          entity(as[UserAuthRequest]) { userAuthRequest =>
+            onComplete(userDao.isValidUser(userAuthRequest)) {
+              case Success(valid) => if (valid) complete(OK, "Yee") else complete(415, "Incorrect credentials")
               case Failure(ex) => complete(415, "Incorrect credentials")
             }
           }

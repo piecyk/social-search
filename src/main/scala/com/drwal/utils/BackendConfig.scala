@@ -6,20 +6,25 @@ object BackendConfig {
 
   val config: Config = ConfigFactory.load.getConfig("drwal.config")
 
-  lazy val environment = System.getProperty("TRAVIS") match {
+  val environment = System.getProperty("TRAVIS") match {
     case null => "dev"
     case "" => "dev"
     case x: String => x
   }
-  println(environment)
 
   object MongoConfig {
     private val mongoConfig = config.getConfig("mongodb")
 
-    lazy val url = mongoConfig.getString("url")
-    lazy val host = mongoConfig.getString("host")
-    lazy val port = mongoConfig.getInt("port")
-    lazy val database = mongoConfig.getString("database")
+    var url = ""
+    var database = ""
+
+    if (environment == "dev") {
+      url = mongoConfig.getString("url")
+      database = mongoConfig.getString("database")
+    } else {
+      url = System.getProperty("MONGOLAB_URI")
+      database = mongoConfig.getString("heroku_app33528479")
+    }
 
     // TODO: travis config
   }
