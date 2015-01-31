@@ -22,13 +22,10 @@ trait TwitterService {
   implicit val system = ActorSystem()
   import system.dispatcher // execution context for futures
 
-  // TODO: move this
-  val userName = "piecu"
-  val baseUrl = "https://api.twitter.com"
-
   def sendAndReceive = sendReceive
 
-  def tweets(bearerToken: String):  Future[List[Tweet]] = {
+  def tweets(bearerToken: String, userName: String):  Future[List[Tweet]] = {
+    log.info("bearerToken = " + bearerToken)
 
     import com.drwal.twitter.TwitterJsonProtocol._
     import SprayJsonSupport._
@@ -36,14 +33,14 @@ trait TwitterService {
     // Improve to deserialize error?  https://groups.google.com/forum/#!topic/spray-user/N6RGjXLGC-Q/discussion
     val pipeline: HttpRequest => Future[List[Tweet]] = (
       addHeader("Authorization", s"Bearer $bearerToken")
-      ~> encode(Gzip)
-      ~> sendAndReceive
-      ~> decode(Deflate)
-      ~> unmarshal[List[Tweet]]
+        ~> encode(Gzip)
+        ~> sendAndReceive
+        ~> decode(Deflate)
+        ~> unmarshal[List[Tweet]]
     )
 
     pipeline {
-      Get(s"$baseUrl/1.1/statuses/user_timeline.json?screen_name=$userName&count=50&include_rts=true&exclude_replies=true")
+      Get(s"https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=$userName&count=5&include_rts=true&exclude_replies=true")
     }
   }
 }

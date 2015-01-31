@@ -13,39 +13,52 @@ import spray.json.DefaultJsonProtocol
 import spray.httpx.encoding.{Gzip, Deflate}
 import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
+import org.slf4j.LoggerFactory
 
 
 object TwitterBearerToken extends TwitterBearerToken {
-  val twitterBaseUrl = "https://api.twitter.com"
+
+  // TODO: like a pro :D
   val consumerKey = "Wtgms4Haxr0TmuQnHqNRHtFfW"
   val consumerSecret = "THORDh6AP2WUJlZPzguxygorY8fbFB3RdvoMXEqnEsnAk7UEmE"
+
   val credentials = Base64.encodeBase64String(s"$consumerKey:$consumerSecret".getBytes())
 
   def getBearerToken: String = {
-    generateBearerToken(credentials, twitterBaseUrl)
+    generateBearerToken(credentials)
   }
 }
 
 trait TwitterBearerToken {
   implicit val system = ActorSystem()
   import system.dispatcher // execution context for futures
+  val log = LoggerFactory.getLogger(getClass)
 
-  def generateBearerToken(credentials: String, baseUrl: String): String = {
+
+  // setup request/response logging
+  val logRequest: HttpRequest => HttpRequest = { r => log.debug(r.toString); r }
+  val logResponse: HttpResponse => HttpResponse = { r => log.debug(r.toString); r }
+
+
+  def generateBearerToken(credentials: String): String = {
     import com.drwal.twitter.TwitterJsonProtocol.twitterTokenFormat
-    import com.drwal.twitter.BsonTwitterJsonProtocol.bsonTwitterTokenFormat
-
     import SprayJsonSupport._
 
     val pipeline: HttpRequest => Future[TwitterToken] = (
       addHeader("Authorization", s"Basic $credentials")
-      ~> encode(Gzip)
-      ~> sendReceive
-      ~> decode(Deflate)
-      ~> unmarshal[TwitterToken]
+        ~> addHeader("Accept", "application/json")
+        ~> logRequest
+        //~> encode(Gzip)
+        ~> sendReceive
+        //~> decode(Deflate)
+        ~> unmarshal[TwitterToken]
     )
+
+    val formData = Map("grant_type" -> "client_credentials")
+
     val response = pipeline {
-      Post(s"$baseUrl/oauth2/token", FormData(Map("grant_type" -> "client_credentials")))
+      Post("https://api.twitter.com/oauth2/token", FormData(formData))
     }
-    Await.result(response, 5 seconds).access_token
+    Await.result(response, 10 seconds).access_token
   }
 }

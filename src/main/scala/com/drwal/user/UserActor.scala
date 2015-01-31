@@ -4,10 +4,22 @@ import akka.actor.Actor
 import spray.http.StatusCodes._
 import spray.routing._
 import com.drwal.utils.RouteHelper
-import scala.util.{Failure, Success}
 import reactivemongo.bson.{BSONObjectID}
 import com.drwal.twitter._
 import org.slf4j.LoggerFactory
+
+import scala.concurrent.duration.{Duration, DurationInt}
+
+import spray.routing.directives.CachingDirectives._
+import spray.routing.directives.MarshallingDirectives._
+import spray.json._
+import DefaultJsonProtocol._
+import spray.httpx.SprayJsonSupport
+import spray.httpx.unmarshalling.{MalformedContent, Unmarshaller, Deserialized}
+import SprayJsonSupport._
+
+import scala.util.{Failure, Success}
+import spray.caching._
 
 
 trait UserActor extends Actor with UserEndpoint {
@@ -15,6 +27,7 @@ trait UserActor extends Actor with UserEndpoint {
   def actorRefFactory = context
   def receive = runRoute(drwalUserApi)
 }
+
 
 trait UserEndpoint extends HttpService with RouteHelper {
   val log = LoggerFactory.getLogger(getClass)
@@ -73,22 +86,40 @@ trait UserEndpoint extends HttpService with RouteHelper {
         }
       }
 
-  // in dev
+  // move this, now in dev
   def twitterRoute: Route = getPath("tweets") {
     import com.drwal.twitter.TwitterJsonProtocol._
 
-    onComplete(TwitterService.tweets(TwitterBearerToken.getBearerToken)) {
-      case Success(tweets) => {
-        respondWithStatus(OK) {
-          log.info("my tweetes" + tweets)
-          complete(tweets.toString)
+    // cache this 
+    cache(routeCache(maxCapacity = 1000, timeToLive = Duration("5 min"))) {
+      onComplete(TwitterService.tweets(TwitterBearerToken.getBearerToken, "piecu")) {
+        case Success(tweets) => {
+          respondWithStatus(OK) {
+            log.info("my tweetes" + tweets)
+            complete(tweets)
+          }
+        }
+        case Failure(ex) => {
+          val errorMsg = ex.getMessage
+          complete(InternalServerError, s"twitterRoute Error: $errorMsg")
         }
       }
-      case Failure(ex) => {
-        val errorMsg = ex.getMessage
-        complete(InternalServerError, s"twitterRoute Error: $errorMsg")
+    }
+  } ~
+  getPath("tweets" / "^[A-Za-z0-9_.]+$".r) { (username) =>
+    import com.drwal.twitter.TwitterJsonProtocol._
+
+    cache(routeCache(maxCapacity = 1000, timeToLive = Duration("5 min"))) {
+      onComplete(TwitterService.tweets(TwitterBearerToken.getBearerToken, username)) {
+        case Success(tweets) => complete(tweets)
+        case Failure(ex) => {
+          val errorMsg = ex.getMessage
+          complete(InternalServerError, s"twitterRoute Error: $errorMsg")
+        }
       }
     }
   }
+
+
 
 }

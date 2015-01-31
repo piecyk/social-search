@@ -23,6 +23,7 @@ libraryDependencies ++= {
   Seq(
     "io.spray"              %%  "spray-can"       % sprayV,
     "io.spray"              %%  "spray-routing"   % sprayV,
+    "io.spray"              %%  "spray-caching"   % sprayV,
     "io.spray"              %%  "spray-testkit"   % sprayV  % "test",
     "io.spray"              %%  "spray-client"    % sprayV,
     "io.spray"              %%  "spray-json"      % "1.3.1",
