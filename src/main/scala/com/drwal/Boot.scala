@@ -8,9 +8,11 @@ import com.drwal.utils.MongoHelper
 import spray.can.Http
 import scala.util.{Properties}
 
+
 trait DrwalActorSystem {
   implicit val system = ActorSystem("on-drwal-can")
 }
+
 
 class DependencyInjector(_userDao: UserDao) extends IndirectActorProducer {
   override def actorClass = classOf[Actor]
@@ -19,11 +21,13 @@ class DependencyInjector(_userDao: UserDao) extends IndirectActorProducer {
   }
 }
 
+
 trait MasterInjector extends Actor with UserEndpoint {
   val userDao: UserDao
   def actorRefFactory = context
   def receive = runRoute(drwalUserApi)
 }
+
 
 object Boot extends App with DrwalActorSystem with MongoHelper {
   val log = LoggerFactory.getLogger(getClass)

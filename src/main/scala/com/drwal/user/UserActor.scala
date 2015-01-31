@@ -6,6 +6,9 @@ import spray.routing._
 import com.drwal.utils.RouteHelper
 import scala.util.{Failure, Success}
 import reactivemongo.bson.{BSONObjectID}
+import com.drwal.twitter._
+import org.slf4j.LoggerFactory
+
 
 trait UserActor extends Actor with UserEndpoint {
   val userDao: UserDao
@@ -14,12 +17,12 @@ trait UserActor extends Actor with UserEndpoint {
 }
 
 trait UserEndpoint extends HttpService with RouteHelper {
-
+  val log = LoggerFactory.getLogger(getClass)
   val userDao: UserDao
 
   implicit def executionContext = actorRefFactory.dispatcher
 
-  def drwalUserApi = getPathApi(userRoute)
+  def drwalUserApi = getPathApi(userRoute ~ twitterRoute)
 
 
   def userRoute: Route =
@@ -69,4 +72,23 @@ trait UserEndpoint extends HttpService with RouteHelper {
           }
         }
       }
+
+  // in dev
+  def twitterRoute: Route = getPath("tweets") {
+    import com.drwal.twitter.TwitterJsonProtocol._
+
+    onComplete(TwitterService.tweets(TwitterBearerToken.getBearerToken)) {
+      case Success(tweets) => {
+        respondWithStatus(OK) {
+          log.info("my tweetes" + tweets)
+          complete(tweets.toString)
+        }
+      }
+      case Failure(ex) => {
+        val errorMsg = ex.getMessage
+        complete(InternalServerError, s"twitterRoute Error: $errorMsg")
+      }
+    }
+  }
+
 }
