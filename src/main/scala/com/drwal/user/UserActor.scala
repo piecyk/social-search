@@ -9,9 +9,7 @@ import reactivemongo.bson.{BSONObjectID}
 
 trait UserActor extends Actor with UserEndpoint {
   val userDao: UserDao
-
   def actorRefFactory = context
-
   def receive = runRoute(drwalUserApi)
 }
 
@@ -22,6 +20,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
   implicit def executionContext = actorRefFactory.dispatcher
 
   def drwalUserApi = getPathApi(userRoute)
+
 
   def userRoute: Route =
     getPath("users") {
