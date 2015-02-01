@@ -1,32 +1,28 @@
 package com.drwal.utils
 
 import com.typesafe.config.{Config, ConfigFactory}
+import scala.util.{Properties}
 
 object BackendConfig {
 
   val config: Config = ConfigFactory.load.getConfig("drwal.config")
 
-  val environment = System.getProperty("TRAVIS") match {
-    case null => "dev"
-    case "" => "dev"
-    case x: String => x
-  }
+  val url = "0.0.0.0"
+  val port = Properties.envOrElse("PORT", "8080").toInt
 
   object MongoConfig {
-    private val mongoConfig = config.getConfig("mongodb")
+    //private val mongoConfig = config.getConfig("mongodb")
 
-    var url = ""
-    var database = ""
+    val uri = Properties.envOrElse("MONGOLAB_URI", "localhost")
+    val database = "heroku_app33528479"
+  }
 
-    if (environment == "dev") {
-      url = mongoConfig.getString("url")
-      database = mongoConfig.getString("database")
-    } else {
-      url = System.getProperty("MONGOLAB_URI")
-      database = mongoConfig.getString("heroku_app33528479")
-    }
+  object TwitterConfig {
+    val _consumerKey = ""
+    val _consumerSecret = ""
 
-    // TODO: travis config
+    val consumerKey = Properties.envOrElse("CONSUMER_KEY", _consumerKey)
+    val consumerSecret = Properties.envOrElse("CONSUMER_SECRET", _consumerSecret)
   }
 
 }

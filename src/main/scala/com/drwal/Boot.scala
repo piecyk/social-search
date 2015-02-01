@@ -7,6 +7,7 @@ import com.drwal.user.{UserReactiveDao, UserDao, UserEndpoint}
 import com.drwal.utils.MongoHelper
 import spray.can.Http
 import scala.util.{Properties}
+import com.drwal.utils.BackendConfig
 
 
 trait DrwalActorSystem {
@@ -40,6 +41,6 @@ object Boot extends App with DrwalActorSystem with MongoHelper {
   val userDao: UserDao = new UserReactiveDao(db, system)
   val service = system.actorOf(Props(classOf[DependencyInjector], userDao), name = "execution")
 
-  IO(Http) ! Http.Bind(service, "0.0.0.0", Properties.envOrElse("PORT", "8080").toInt)
+  IO(Http) ! Http.Bind(service, BackendConfig.url, BackendConfig.port)
   log.info("Backend Service End")
 }

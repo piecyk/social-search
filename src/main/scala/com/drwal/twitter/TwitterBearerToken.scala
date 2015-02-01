@@ -15,12 +15,13 @@ import spray.httpx.SprayJsonSupport
 import spray.client.pipelining._
 import org.slf4j.LoggerFactory
 
+import com.drwal.utils.BackendConfig.TwitterConfig
+
 
 object TwitterBearerToken extends TwitterBearerToken {
 
-  // TODO: like a pro :D
-  val consumerKey = "Wtgms4Haxr0TmuQnHqNRHtFfW"
-  val consumerSecret = "THORDh6AP2WUJlZPzguxygorY8fbFB3RdvoMXEqnEsnAk7UEmE"
+  val consumerKey = TwitterConfig.consumerKey
+  val consumerSecret = TwitterConfig.consumerSecret
 
   val credentials = Base64.encodeBase64String(s"$consumerKey:$consumerSecret".getBytes())
 
@@ -47,7 +48,7 @@ trait TwitterBearerToken {
     val pipeline: HttpRequest => Future[TwitterToken] = (
       addHeader("Authorization", s"Basic $credentials")
         ~> addHeader("Accept", "application/json")
-        ~> logRequest
+        //~> logRequest
         //~> encode(Gzip)
         ~> sendReceive
         //~> decode(Deflate)

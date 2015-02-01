@@ -1,12 +1,18 @@
 package com.drwal.utils
 
-import reactivemongo.api.{MongoConnection, MongoDriver, DB}
-import scala.util.{Failure, Success, Try, Properties}
-import scala.concurrent._
 import akka.pattern.ask
 import akka.util.Timeout
+
 import scala.concurrent.duration._
+import scala.util.{Failure, Success, Try, Properties}
+import scala.concurrent._
+
+import reactivemongo.api.{MongoConnection, MongoDriver, DB}
+
 import org.slf4j.LoggerFactory
+
+import com.drwal.utils.BackendConfig.MongoConfig
+
 
 trait MongoHelper {
 
@@ -15,11 +21,10 @@ trait MongoHelper {
 
     val promise = Promise[DB]()
     val driver = new MongoDriver
-    val uri = Properties.envOrElse("MONGOLAB_URI", "localhost" )
-    val connection: Try[MongoConnection] = MongoConnection.parseURI(uri).map { parsedUri => driver.connection(parsedUri) }
-    
+    val connection: Try[MongoConnection] = MongoConnection.parseURI(MongoConfig.uri).map { parsedUri => driver.connection(parsedUri) }
+
     connection match {
-      case Success(con) => promise.success(con("heroku_app33528479"))
+      case Success(con) => promise.success(con(MongoConfig.database))
       case Failure(e) => throw new IllegalStateException("should not have come here")
     }
     promise.future
@@ -33,5 +38,5 @@ trait MongoHelper {
     log.info("resolveConnectToDb = " + db)
     Await.result(db, timeout.duration).asInstanceOf[DB]
   }
-  
+
 }
