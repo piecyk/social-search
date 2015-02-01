@@ -1,7 +1,7 @@
 package com.drwal.utils
 
-import com.typesafe.config.{Config, ConfigFactory}
-import scala.util.{Properties}
+import com.typesafe.config.{ Config, ConfigFactory }
+import scala.util.{ Properties }
 
 object BackendConfig {
 
@@ -10,11 +10,15 @@ object BackendConfig {
   val url = "0.0.0.0"
   val port = Properties.envOrElse("PORT", "8080").toInt
 
-  object MongoConfig {
-    //private val mongoConfig = config.getConfig("mongodb")
+  def dbName(s: String) = {
+    val Line = """mongodb://(\w*):(\w*)@([\w\.]*):(\w*)/(\w*)""".r
+    val Line(dbUser, dbPass, host, port, dbName) = s
+    dbName
+  }
 
+  object MongoConfig {
     val uri = Properties.envOrElse("MONGOLAB_URI", "localhost")
-    val database = "heroku_app33528479"
+    val database = dbName(uri)
   }
 
   object TwitterConfig {
