@@ -8,9 +8,7 @@ import com.drwal.utils.RouteHelper
 import reactivemongo.bson.{ BSONObjectID }
 import com.drwal.twitter._
 import org.slf4j.LoggerFactory
-
 import scala.concurrent.duration.{ Duration, DurationInt }
-
 import spray.routing.directives.CachingDirectives._
 import spray.routing.directives.MarshallingDirectives._
 import spray.json._
@@ -18,9 +16,11 @@ import DefaultJsonProtocol._
 import spray.httpx.SprayJsonSupport
 import spray.httpx.unmarshalling.{ MalformedContent, Unmarshaller, Deserialized }
 import SprayJsonSupport._
-
 import scala.util.{ Failure, Success }
 import spray.caching._
+import spray.can.Http
+import spray.http.StatusCode
+import spray.http.StatusCodes
 
 trait UserActor extends Actor with UserEndpoint {
   val userDao: UserDao
@@ -28,7 +28,7 @@ trait UserActor extends Actor with UserEndpoint {
   def receive = runRoute(drwalUserApi)
 }
 
-trait UserEndpoint extends HttpService with RouteHelper with CORSDirective {
+trait UserEndpoint extends HttpService with RouteHelper {
   val log = LoggerFactory.getLogger(getClass)
   val userDao: UserDao
 
@@ -36,7 +36,7 @@ trait UserEndpoint extends HttpService with RouteHelper with CORSDirective {
 
   def drwalUserApi = getPathApi(userRoute ~ twitterRoute)
 
-  def userRoute: Route = CORS {
+  def userRoute: Route = {
     getPath("users") {
       import com.drwal.user.UserResponceJsonProtocol._
 
@@ -76,9 +76,11 @@ trait UserEndpoint extends HttpService with RouteHelper with CORSDirective {
 
         post {
           entity(as[UserAuthRequest]) { userAuthRequest =>
+          val INCORRECT_CREDENTIALS = """{"error":"Incorrect credentials"}"""
+          val AUTHENTICATED = """{"result":"Authenticated"}"""
             onComplete(userDao.isValidUser(userAuthRequest)) {
-              case Success(valid) => if (valid) complete(OK, "Yee") else complete(415, "Incorrect credentials")
-              case Failure(ex) => complete(415, "Incorrect credentials")
+              case Success(valid) => if (valid) complete(OK, AUTHENTICATED) else complete(StatusCodes.Unauthorized.intValue, INCORRECT_CREDENTIALS)
+              case Failure(ex) => complete(StatusCodes.Unauthorized.intValue , INCORRECT_CREDENTIALS)
             }
           }
         }
