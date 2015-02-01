@@ -43,4 +43,5 @@ object Boot extends App with DrwalActorSystem with MongoHelper {
 
   IO(Http) ! Http.Bind(service, BackendConfig.url, BackendConfig.port)
   log.info("Backend Service End")
+  java.lang.Thread.sleep(10000);
 }

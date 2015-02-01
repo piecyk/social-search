@@ -1,26 +1,26 @@
 package com.drwal.user
 
+import com.drwal.utils.CORSDirective
 import akka.actor.Actor
 import spray.http.StatusCodes._
 import spray.routing._
 import com.drwal.utils.RouteHelper
-import reactivemongo.bson.{BSONObjectID}
+import reactivemongo.bson.{ BSONObjectID }
 import com.drwal.twitter._
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration.{Duration, DurationInt}
+import scala.concurrent.duration.{ Duration, DurationInt }
 
 import spray.routing.directives.CachingDirectives._
 import spray.routing.directives.MarshallingDirectives._
 import spray.json._
 import DefaultJsonProtocol._
 import spray.httpx.SprayJsonSupport
-import spray.httpx.unmarshalling.{MalformedContent, Unmarshaller, Deserialized}
+import spray.httpx.unmarshalling.{ MalformedContent, Unmarshaller, Deserialized }
 import SprayJsonSupport._
 
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 import spray.caching._
-
 
 trait UserActor extends Actor with UserEndpoint {
   val userDao: UserDao
@@ -28,8 +28,7 @@ trait UserActor extends Actor with UserEndpoint {
   def receive = runRoute(drwalUserApi)
 }
 
-
-trait UserEndpoint extends HttpService with RouteHelper {
+trait UserEndpoint extends HttpService with RouteHelper with CORSDirective {
   val log = LoggerFactory.getLogger(getClass)
   val userDao: UserDao
 
@@ -37,8 +36,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
 
   def drwalUserApi = getPathApi(userRoute ~ twitterRoute)
 
-
-  def userRoute: Route =
+  def userRoute: Route = CORS {
     getPath("users") {
       import com.drwal.user.UserResponceJsonProtocol._
 
@@ -85,7 +83,7 @@ trait UserEndpoint extends HttpService with RouteHelper {
           }
         }
       }
-
+  }
   // move this, now in dev
   def twitterRoute: Route = getPath("tweets") {
     import com.drwal.twitter.TwitterJsonProtocol._
@@ -106,20 +104,18 @@ trait UserEndpoint extends HttpService with RouteHelper {
       }
     }
   } ~
-  getPath("tweets" / "^[A-Za-z0-9_.]+$".r) { (username) =>
-    import com.drwal.twitter.TwitterJsonProtocol._
+    getPath("tweets" / "^[A-Za-z0-9_.]+$".r) { (username) =>
+      import com.drwal.twitter.TwitterJsonProtocol._
 
-    cache(routeCache(maxCapacity = 1000, timeToLive = Duration("5 min"))) {
-      onComplete(TwitterService.tweets(TwitterBearerToken.getBearerToken, username)) {
-        case Success(tweets) => complete(tweets)
-        case Failure(ex) => {
-          val errorMsg = ex.getMessage
-          complete(InternalServerError, s"twitterRoute Error: $errorMsg")
+      cache(routeCache(maxCapacity = 1000, timeToLive = Duration("5 min"))) {
+        onComplete(TwitterService.tweets(TwitterBearerToken.getBearerToken, username)) {
+          case Success(tweets) => complete(tweets)
+          case Failure(ex) => {
+            val errorMsg = ex.getMessage
+            complete(InternalServerError, s"twitterRoute Error: $errorMsg")
+          }
         }
       }
     }
-  }
-
-
 
 }
